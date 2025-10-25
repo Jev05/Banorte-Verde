@@ -1,249 +1,130 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escáner QR</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            text-align: center;
-        }
-        #my-qr-reader {
-            margin: 20px auto;
-        }
-        #you-qr-result {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            min-height: 30px;
-        }
-        .input-section {
-            margin: 20px 0;
-            padding: 20px;
-            background-color: #e8f4f8;
-            border-radius: 8px;
-        }
-        .input-group {
-            margin: 15px 0;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
-        }
-        .input-group input {
-            padding: 10px;
-            font-size: 16px;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            width: 200px;
-        }
-        .decoded-text {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-        .btn-finalizar {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 30px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-        .btn-finalizar:hover {
-            background-color: #45a049;
-        }
-        .btn-finalizar:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .mensaje-exito {
-            color: #4CAF50;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .mensaje-error {
-            color: #f44336;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escáner QR</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+    }
+    #my-qr-reader {
+      margin: 20px auto;
+    }
+    #you-qr-result {
+      margin: 20px 0;
+      padding: 15px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      min-height: 30px;
+    }
+    #form-datos {
+      display: none;
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Escanear Código QR</h1>
-    <div id="you-qr-result"></div>
-    <div id="my-qr-reader" style="width: 500px; margin: 0 auto;"></div>
+  <h1>Escanear Código QR</h1>
 
-    <div class="input-section" id="input-section" style="display: none;">
-        <div class="decoded-text">
-            <strong>Texto Decodificado:</strong>
-            <div id="decoded-display"></div>
-        </div>
-        
-        <div class="input-group">
-            <label for="cantidad">Cantidad:</label>
-            <input type="number" id="cantidad" min="1" placeholder="Ingrese cantidad">
-        </div>
-        
-        <button class="btn-finalizar" id="btn-finalizar">Finalizar y Enviar</button>
-        <div id="mensaje"></div>
-    </div>
+  <div id="you-qr-result"></div>
+  <div id="my-qr-reader" style="width: 500px; margin: 0 auto;"></div>
 
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script>
-        let decodedData = '';
-        let scannedText = '';
+  <!-- Formulario de cantidad -->
+  <div id="form-datos">
+    <h3>Agregar cantidad de botellas</h3>
+    <input type="number" id="cantidad" placeholder="Cantidad de botellas" min="1" required>
+    <button id="enviar">Enviar</button>
+    <p id="mensaje"></p>
+  </div>
 
-        function domReady(fn) {
-            if (document.readyState === "complete" || document.readyState === "interactive") {
-                setTimeout(fn, 1);
-            } else {
-                document.addEventListener("DOMContentLoaded", fn);
-            }
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script>
+    function domReady(fn) {
+      if (document.readyState === "complete" || document.readyState === "interactive") {
+        setTimeout(fn, 1);
+      } else {
+        document.addEventListener("DOMContentLoaded", fn);
+      }
+    }
+
+    domReady(function() {
+      var myqr = document.getElementById('you-qr-result');
+      var form = document.getElementById('form-datos');
+      var cantidadInput = document.getElementById('cantidad');
+      var enviarBtn = document.getElementById('enviar');
+      var mensaje = document.getElementById('mensaje');
+
+      var correoDesencriptado = "";
+      var lastResult, countResults = 0;
+
+      function onScanSuccess(decodeText, decodeResult) {
+        if (decodeText !== lastResult) {
+          ++countResults;
+          lastResult = decodeText;
+
+          try {
+            // Decodificar Base64 → correo
+            correoDesencriptado = atob(decodeText);
+          } catch (e) {
+            alert("El código QR no contiene un correo válido en Base64.");
+            return;
+          }
+
+          alert("Correo detectado: " + correoDesencriptado);
+          myqr.innerHTML = `Correo escaneado: <b>${correoDesencriptado}</b>`;
+          form.style.display = 'block';
         }
-        
-        function decodeBase64(encodedText) {
-            try {
-                return atob(encodedText);
-            } catch (e) {
-                console.error('Error al decodificar Base64:', e);
-                return encodedText; // Si falla, devuelve el texto original
-            }
+      }
+
+      var htmlscanner = new Html5QrcodeScanner("my-qr-reader", {
+        fps: 10,
+        qrbox: 250
+      });
+      htmlscanner.render(onScanSuccess);
+
+      enviarBtn.addEventListener('click', function() {
+        var cantidad = cantidadInput.value.trim();
+        if (!cantidad || cantidad <= 0) {
+          mensaje.textContent = "Ingresa una cantidad válida.";
+          mensaje.style.color = "red";
+          return;
         }
 
-        async function enviarABaseDatos(textoDecodificado, cantidad) {
-            // Aquí va tu lógica para enviar a la base de datos
-            // Por ejemplo, usando fetch a tu API:
-            
-            try {
-                const data = {
-                    textoDecodificado: textoDecodificado,
-                    cantidad: cantidad,
-                    fecha: new Date().toISOString()
-                };
-
-                // Ejemplo de envío (ajusta la URL a tu endpoint)
-                /*
-                const response = await fetch('TU_URL_API/endpoint', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error en la respuesta del servidor');
-                }
-
-                const result = await response.json();
-                return { success: true, data: result };
-                */
-
-                // Simulación de envío exitoso (eliminar en producción)
-                console.log('Datos a enviar:', data);
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simula delay de red
-                return { success: true, data: data };
-
-            } catch (error) {
-                console.error('Error al enviar datos:', error);
-                return { success: false, error: error.message };
-            }
-        }
-        
-        domReady(function() {
-            var myqr = document.getElementById('you-qr-result');
-            var inputSection = document.getElementById('input-section');
-            var decodedDisplay = document.getElementById('decoded-display');
-            var cantidadInput = document.getElementById('cantidad');
-            var btnFinalizar = document.getElementById('btn-finalizar');
-            var mensaje = document.getElementById('mensaje');
-            var lastResult, countResults = 0;
-
-            function onScanSuccess(decodeText, decodeResult) {
-                if (decodeText !== lastResult) {
-                    ++countResults;
-                    lastResult = decodeText;
-                    scannedText = decodeText;
-
-                    // Decodificar de Base64
-                    decodedData = decodeBase64(decodeText);
-
-                    alert("Código QR escaneado exitosamente");
-                    myqr.innerHTML = `Has escaneado ${countResults} código(s)`;
-                    
-                    // Mostrar el texto decodificado
-                    decodedDisplay.textContent = decodedData;
-                    
-                    // Mostrar la sección de entrada
-                    inputSection.style.display = 'block';
-                    
-                    // Enfocar el input de cantidad
-                    cantidadInput.focus();
-                }
-            }
-            
-            // Evento del botón Finalizar
-            btnFinalizar.addEventListener('click', async function() {
-                const cantidad = cantidadInput.value;
-                
-                if (!cantidad || cantidad <= 0) {
-                    mensaje.className = 'mensaje-error';
-                    mensaje.textContent = 'Por favor ingrese una cantidad válida';
-                    return;
-                }
-
-                if (!decodedData) {
-                    mensaje.className = 'mensaje-error';
-                    mensaje.textContent = 'No hay datos escaneados';
-                    return;
-                }
-
-                // Deshabilitar botón mientras se envía
-                btnFinalizar.disabled = true;
-                mensaje.textContent = 'Enviando...';
-                mensaje.className = '';
-
-                const resultado = await enviarABaseDatos(decodedData, cantidad);
-
-                if (resultado.success) {
-                    mensaje.className = 'mensaje-exito';
-                    mensaje.textContent = '¡Datos enviados exitosamente a la base de datos!';
-                    
-                    // Limpiar después de 2 segundos
-                    setTimeout(() => {
-                        cantidadInput.value = '';
-                        decodedData = '';
-                        scannedText = '';
-                        inputSection.style.display = 'none';
-                        mensaje.textContent = '';
-                        btnFinalizar.disabled = false;
-                    }, 2000);
-                } else {
-                    mensaje.className = 'mensaje-error';
-                    mensaje.textContent = 'Error al enviar datos: ' + resultado.error;
-                    btnFinalizar.disabled = false;
-                }
-            });
-
-            var htmlscanner = new Html5QrcodeScanner("my-qr-reader", {
-                fps: 10, 
-                qrbox: 250
-            });
-            
-            htmlscanner.render(onScanSuccess);
+        // Enviar datos al servidor
+        fetch("insertar_botellas.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            correo: correoDesencriptado,
+            cantidad: cantidad
+          })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            mensaje.textContent = "Registro exitoso.";
+            mensaje.style.color = "green";
+          } else {
+            mensaje.textContent = "Error: " + data.message;
+            mensaje.style.color = "red";
+          }
+        })
+        .catch(err => {
+          mensaje.textContent = "Error de conexión con el servidor.";
+          mensaje.style.color = "red";
         });
-    </script>
+      });
+    });
+  </script>
 </body>
 </html>

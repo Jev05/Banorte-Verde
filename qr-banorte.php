@@ -5,8 +5,9 @@ $nombre_usuario = "Usuario no encontrado";
 $imagen_qr_base64 = "";
 $error_mensaje = "";
 
-if (isset($_GET['id']) && is_numeric($_GET['id'])) {
-    $usuario_id = (int)$_GET['id'];
+//if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+  //  $usuario_id = (int)$_GET['id'];
+  $usuario_id = 152;
     
     // MEJORA: Prepared statement para seguridad
     $stmt = $conn->prepare("SELECT nombre, email FROM usuarios WHERE id = ?");
@@ -50,9 +51,9 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     
     $stmt->close();
 
-} else {
+/*} else {
     $error_mensaje = "Por favor, proporciona un ID de usuario válido en la URL ";
-}
+}*/
 $conn->close();
 ?>
 
